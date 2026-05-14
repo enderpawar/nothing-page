@@ -20,11 +20,18 @@ const games = [
 ];
 
 const rules = [
-  ['01', '서로를 존중할 것', '디스코드 너머에도 사람이 있다. 장난은 OK, 선 넘기는 NO.', 'peace'],
-  ['02', '초대제로만 운영', '아무나 올 수 없다. 기존 멤버의 추천이 필요하다.', 'lock'],
-  ['03', '잠수는 이해하지만, 소통은 해줘', '바쁜 건 안다. 그래도 가끔 한마디는 남겨달라.', 'chat'],
-  ['04', '게임은 진지하게, 분위기는 가볍게', '이기고 싶지만, 지더라도 재밌으면 그만이다.', 'game'],
-  ['05', 'NOTHING의 정신을 지킬 것', '쓸데없는 규칙은 없다. 자유롭되, 배려하자.', 'nothing']
+  ['01', '서로를 존중해 주세요', '디스코드 너머에도 사람이 있습니다. 장난은 괜찮지만, 선은 넘지 말아 주세요.', 'peace'],
+  ['02', '초대제로만 운영됩니다', '아무나 들어올 수 없습니다. 기존 멤버의 추천이 필요합니다.', 'lock'],
+  ['03', '잠수는 이해하지만, 소통해 주세요', '바쁜 건 이해합니다. 그래도 가끔 한마디는 남겨 주세요.', 'chat'],
+  ['04', '게임은 진지하게, 분위기는 가볍게 즐겨 주세요', '이기고 싶어도, 지더라도 재미있으면 충분합니다.', 'game'],
+  ['05', 'NOTHING의 정신을 지켜 주세요', '쓸데없는 규칙은 없습니다. 자유롭게 즐기되, 서로를 배려해 주세요.', 'nothing']
+];
+
+const showcaseMoments = [
+  ['01', 'First Night', '처음 들어오신 분도 바로 대화에 섞일 수 있도록, 기존 멤버가 먼저 분위기를 열어 드립니다.'],
+  ['02', 'Voice Room', '새벽 보이스룸은 가볍게 시작해서 게임, 일상, 음악 이야기로 자연스럽게 이어집니다.'],
+  ['03', 'Game Queue', '발로란트, 리그, 마인크래프트처럼 그날 맞는 게임을 골라 부담 없이 함께합니다.'],
+  ['04', 'Small Circle', '20명 규모를 유지해 이름 없는 대기열이 아니라 서로 알아가는 공간으로 운영합니다.']
 ];
 
 function splitChars(el) {
@@ -119,6 +126,52 @@ function App() {
 
     document.addEventListener('mousemove', onMouseMove);
 
+    const getFooterMaxScroll = () => {
+      const footer = document.querySelector('footer');
+      if (!footer) return document.documentElement.scrollHeight - window.innerHeight;
+
+      const maxAtFooterBottom = footer.offsetTop + footer.offsetHeight - window.innerHeight;
+      const documentMax = document.documentElement.scrollHeight - window.innerHeight;
+      return Math.max(0, Math.min(maxAtFooterBottom, documentMax));
+    };
+
+    const clampToFooterBottom = () => {
+      const maxScroll = getFooterMaxScroll();
+      if (window.scrollY > maxScroll) {
+        lenis.scrollTo(maxScroll, { immediate: true });
+      }
+    };
+
+    const onWheelLimit = (event) => {
+      const maxScroll = getFooterMaxScroll();
+      if (event.deltaY > 0 && window.scrollY >= maxScroll - 1) {
+        event.preventDefault();
+        lenis.scrollTo(maxScroll, { immediate: true });
+      }
+    };
+
+    let touchStartY = 0;
+    const onTouchStartLimit = (event) => {
+      touchStartY = event.touches[0]?.clientY ?? 0;
+    };
+
+    const onTouchMoveLimit = (event) => {
+      const currentY = event.touches[0]?.clientY ?? touchStartY;
+      const swipingDownPage = currentY < touchStartY;
+      const maxScroll = getFooterMaxScroll();
+
+      if (swipingDownPage && window.scrollY >= maxScroll - 1) {
+        event.preventDefault();
+        lenis.scrollTo(maxScroll, { immediate: true });
+      }
+    };
+
+    window.addEventListener('wheel', onWheelLimit, { passive: false });
+    window.addEventListener('touchstart', onTouchStartLimit, { passive: true });
+    window.addEventListener('touchmove', onTouchMoveLimit, { passive: false });
+    window.addEventListener('resize', clampToFooterBottom);
+    lenis.on('scroll', clampToFooterBottom);
+
     const cursorLoop = () => {
       cursorX += (mouseX - cursorX) * 0.18;
       cursorY += (mouseY - cursorY) * 0.18;
@@ -202,7 +255,8 @@ function App() {
           y: 50,
           duration: 1.1,
           ease: 'power3.out',
-          scrollTrigger: { trigger: el, start: 'top 88%' }
+          immediateRender: false,
+          scrollTrigger: { trigger: el, start: 'top 88%', once: true }
         });
       });
 
@@ -211,6 +265,7 @@ function App() {
         x: -30,
         duration: 1,
         ease: 'power3.out',
+        immediateRender: false,
         scrollTrigger: { trigger: '.about-title', start: 'top 80%' }
       });
       gsap.from('.about-title .t-outline', {
@@ -219,6 +274,7 @@ function App() {
         duration: 1,
         delay: 0.15,
         ease: 'power3.out',
+        immediateRender: false,
         scrollTrigger: { trigger: '.about-title', start: 'top 80%' }
       });
       gsap.to('.about-deco', {
@@ -241,14 +297,14 @@ function App() {
       });
       timeline.to('#vibeSub', { opacity: 1, duration: 0.3 }, '>.1');
 
-      gsap.from('.m-card', {
+      gsap.from('.members-index,.members-stage', {
         opacity: 0,
-        y: 40,
-        scale: 0.92,
-        duration: 0.7,
-        stagger: { each: 0.035, from: 'random' },
+        y: 30,
+        duration: 0.9,
+        stagger: 0.08,
         ease: 'power3.out',
-        scrollTrigger: { trigger: '#members', start: 'top 65%' }
+        immediateRender: false,
+        scrollTrigger: { trigger: '#members', start: 'top 70%' }
       });
 
       const track = document.getElementById('gamesTrack');
@@ -288,6 +344,7 @@ function App() {
         duration: 0.9,
         stagger: 0.025,
         ease: 'power3.out',
+        immediateRender: false,
         scrollTrigger: { trigger: '#manifestoTitle', start: 'top 80%' }
       });
 
@@ -295,13 +352,24 @@ function App() {
         scale: 0.8,
         opacity: 0,
         filter: 'blur(10px)',
+        immediateRender: false,
         scrollTrigger: { trigger: '#join', start: 'top 65%', end: 'center center', scrub: 1 }
       });
-      gsap.from('.footer-big', {
+      gsap.from('.join-kicker,.join-copy,.join-action,.join-proof,.join-showcase', {
+        opacity: 0,
+        y: 28,
+        duration: 0.9,
+        stagger: 0.08,
+        ease: 'power3.out',
+        immediateRender: false,
+        scrollTrigger: { trigger: '#join', start: 'top 58%' }
+      });
+      gsap.from('.footer-brand,.footer-map,.footer-meta', {
         y: 60,
         opacity: 0,
         duration: 1.2,
         ease: 'power3.out',
+        immediateRender: false,
         scrollTrigger: { trigger: 'footer', start: 'top 85%' }
       });
 
@@ -316,7 +384,7 @@ function App() {
         cleanups.push(() => anchor.removeEventListener('click', click));
       });
 
-      document.querySelectorAll('.stat-card,.m-card,.g-card,.vibe-tag,.join-btn').forEach((el) => {
+      document.querySelectorAll('.stat-card,.g-card,.vibe-tag,.join-btn').forEach((el) => {
         cleanups.push(bindHover(el, cursor, trail));
       });
       document.querySelectorAll('.marquee-inner').forEach((el) => el.classList.add('velocity-skew'));
@@ -350,10 +418,13 @@ function App() {
       clearInterval(loaderInterval);
       cleanups.forEach((cleanup) => cleanup());
       document.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('wheel', onWheelLimit);
+      window.removeEventListener('touchstart', onTouchStartLimit);
+      window.removeEventListener('touchmove', onTouchMoveLimit);
+      window.removeEventListener('resize', clampToFooterBottom);
       cancelAnimationFrame(cursorFrame);
       cancelAnimationFrame(skewFrame);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      gsap.globalTimeline.clear();
       lenis.destroy();
     };
   }, []);
@@ -424,12 +495,12 @@ function App() {
               <span className="t-accent">NOTHING</span><br />
               <span className="t-outline">...what</span> <span className="t-light">else?</span>
             </h2>
-            <p className="about-text" data-reveal>2026년 2월, 아무것도 아닌 곳에서 시작된 우리. 20명의 소수 정예 크루가 모여 게임하고, 웃고, 가끔은 진지한 이야기도 나누는 공간. 거창한 목적 따위 없다. 그냥 함께하는 것 자체가 전부.</p>
+            <p className="about-text" data-reveal>2026년 2월, 아무것도 아닌 곳에서 시작된 저희입니다. 20명의 소수 정예 크루가 모여 게임하고, 웃고, 가끔은 진지한 이야기도 나누는 공간입니다. 거창한 목적은 없습니다. 그냥 함께하는 것 자체가 전부입니다.</p>
           </div>
           <div className="about-right">
-            <Stat number="20" label="Elite Members" desc="소수 정예. 양보다 질을 택했다." />
-            <Stat number="∞" label="Hours Wasted" desc="새벽 4시의 게임 세션은 기본." />
-            <Stat number="⊘" label="Ego Allowed" desc="에고 금지. 모두가 평등한 공간." />
+            <Stat number="20" label="Elite Members" desc="소수 정예입니다. 양보다 질을 선택했습니다." />
+            <Stat number="∞" label="Hours Wasted" desc="새벽 4시의 게임 세션도 자연스럽게 이어집니다." />
+            <Stat number="⊘" label="Ego Allowed" desc="에고는 내려놓아 주세요. 모두가 평등한 공간입니다." />
           </div>
         </div>
       </section>
@@ -442,7 +513,7 @@ function App() {
             <span className="word">EVERY</span><br />
             <span className="word word-outline">THING.</span>
           </div>
-          <p className="vibe-sub" id="vibeSub">우리에게 "아무것도 아닌 것"은 곧 "전부"를 의미한다.<br />목적 없이 모이지만, 그 속에서 진짜 유대가 생긴다.</p>
+          <p className="vibe-sub" id="vibeSub">저희에게 "아무것도 아닌 것"은 곧 "전부"를 의미합니다.<br />목적 없이 모이지만, 그 속에서 진짜 유대가 생깁니다.</p>
           <div className="vibe-tags">
             {['Gaming', 'Late Night Talks', 'Memes', 'No Rules', 'Vibes Only'].map((tag) => (
               <span className="vibe-tag" key={tag}><span>{tag}</span></span>
@@ -454,25 +525,33 @@ function App() {
       <Marquee id="marquee2" mark="★" items={['EST. 2026', 'DISCORD CREW', 'INVITE ONLY', '20대 크루']} />
 
       <section id="members">
-        <div className="members-header">
-          <div className="members-left">
+        <div className="members-bg-text" aria-hidden="true">CREW</div>
+        <div className="members-editorial">
+          <div className="members-copy">
             <div className="label" data-reveal>(002) The Crew</div>
-            <div className="members-count" data-reveal>20</div>
-            <div className="members-subtitle" data-reveal>Souls connected.</div>
-          </div>
-          <div className="members-right">
-            <h2 className="members-title" data-reveal>One Server,<br /><span className="t-outline">Zero</span> Strangers.</h2>
-          </div>
-        </div>
-        <div className="m-grid" id="membersGrid">
-          {memberCards.map((member) => (
-            <div className={`m-card${member.tall ? ' tall' : ''}`} key={member.name} onMouseMove={handleMemberMove}>
-              <div className={`m-dot ${member.online ? 'on' : 'off'}`} />
-              <div className="m-ava" style={member.avatarStyle}>{member.name[0]}</div>
-              <div className="m-name">{member.name}</div>
-              <div className="m-role">{member.role}</div>
+            <h2 className="members-hero-title" data-reveal>
+              처음이어도<br />
+              <span>혼자가 아닙니다.</span>
+            </h2>
+            <p className="members-intro" data-reveal>
+              NOTHING은 큰 커뮤니티가 아니라, 서로의 목소리를 기억하는 작은 방입니다. 처음 들어오신 분도 어색하지 않도록 자연스럽게 대화와 게임에 합류하실 수 있습니다.
+            </p>
+            <div className="members-index" aria-label="crew numbers">
+              <div><strong>20</strong><span>members</span></div>
+              <div><strong>12</strong><span>in voice</span></div>
+              <div><strong>04</strong><span>ready queue</span></div>
             </div>
-          ))}
+          </div>
+
+          <div className="members-stage" data-reveal>
+            <div className="crew-visual">
+              <img src="/crew-night-room.png" alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" />
+              <div className="crew-visual-caption">
+                <span>Tonight room</span>
+                <strong>불이 켜져 있는 방이 있습니다.</strong>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -480,7 +559,7 @@ function App() {
         <section id="games">
           <div className="games-header">
             <div className="label" data-reveal>(003) What We Play</div>
-            <h2 className="games-title" data-reveal>우리의 전장.</h2>
+            <h2 className="games-title" data-reveal>저희의 전장입니다.</h2>
             <p className="games-counter" data-reveal>06 Titles & Counting</p>
           </div>
           <div className="games-track" id="gamesTrack">
@@ -514,33 +593,68 @@ function App() {
       <section id="join">
         <div className="join-bg" />
         <div className="join-grid" />
-        <h2 className="join-title" data-reveal>
-          <span className="strike">EVERY</span><br />NOTHING<br /><span className="strike">MATTERS</span>
-        </h2>
-        <a href="#" className="join-btn">
-          <span className="join-btn-text">Join the Crew</span>
-          <span className="arr">-&gt;</span>
-        </a>
-        <p className="join-note" data-reveal>Invite Only - Ask a Member</p>
+        <div className="join-content">
+          <div className="join-copy-block">
+            <p className="join-kicker">Private crew invitation</p>
+            <h2 className="join-title" data-reveal>
+              오늘 밤,<br />
+              빈자리가 있습니다.
+            </h2>
+            <p className="join-copy">처음 들어오셔도 바로 대화에 섞일 수 있도록 저희가 먼저 맞이합니다. 가볍게 인사하고, 보이스룸 분위기를 살핀 뒤, 원하시면 바로 게임에 합류하시면 됩니다.</p>
+            <div className="join-action">
+              <a href="#" className="join-btn">
+                <span className="join-btn-text">초대를 요청하세요</span>
+                <span className="arr">-&gt;</span>
+              </a>
+              <p className="join-note">Aeden 또는 기존 멤버에게 초대를 요청하세요</p>
+            </div>
+          </div>
+
+          <div className="join-showcase" aria-label="invite preview">
+            <div className="join-pass">
+              <div className="join-pass-top">
+                <span>NOTHING PASS</span>
+                <strong>⊘</strong>
+              </div>
+              <div className="join-pass-main">
+                <p>Invite Only</p>
+                <h3>First Night Access</h3>
+              </div>
+              <div className="join-pass-meta">
+                <div><span>Room</span><strong>Voice 01</strong></div>
+                <div><span>Host</span><strong>Aeden</strong></div>
+                <div><span>Since</span><strong>2026.02.20</strong></div>
+              </div>
+            </div>
+            <div className="join-proof" aria-label="server proof">
+              <span>12 active tonight</span>
+              <span>small circle</span>
+              <span>first hello guaranteed</span>
+            </div>
+          </div>
+        </div>
       </section>
 
       <footer>
-        <div className="footer-big" data-reveal>
-          Let's play<br />
-          <span className="t-outline">together</span><br />
-          <span className="t-accent">tonight.</span>
-        </div>
-        <div className="footer-bottom">
-          <FooterCol title="Server" items={['NOTHING ⊘', 'Dirc. Aeden']} />
-          <FooterCol title="Since" items={['2026.02.20', 'Seoul, Korea']} />
-          <div className="footer-col">
-            <div className="footer-col-title">Contact</div>
-            <a href="#">Discord</a>
-            <a href="#">Instagram</a>
+        <div className="footer-layout">
+          <div className="footer-brand" data-reveal>
+            <span>NOTHING ⊘</span>
+            <p>작은 방, 늦은 밤, 서로를 기억하는 20명의 크루입니다.</p>
           </div>
-          <FooterCol title="Status" items={['20 / 20 Members', 'Invite Only']} />
+          <div className="footer-map">
+            <a href="#about">About</a>
+            <a href="#members">Crew</a>
+            <a href="#games-wrap">Games</a>
+            <a href="#join">Join</a>
+          </div>
+          <div className="footer-meta">
+            <div><span>Director</span><strong>Aeden</strong></div>
+            <div><span>Since</span><strong>2026.02.20</strong></div>
+            <div><span>Status</span><strong>Invite Only</strong></div>
+            <div><span>Location</span><strong>Seoul, Korea</strong></div>
+          </div>
         </div>
-        <div className="footer-copy">© 2026 NOTHING - All rights reserved. Nothing is everything.</div>
+        <div className="footer-copy">© 2026 NOTHING. Nothing is everything.</div>
       </footer>
     </>
   );
@@ -565,15 +679,6 @@ function Stat({ number, label, desc }) {
       <div className="stat-num">{number}</div>
       <div className="stat-lbl">{label}</div>
       <div className="stat-desc">{desc}</div>
-    </div>
-  );
-}
-
-function FooterCol({ title, items }) {
-  return (
-    <div className="footer-col">
-      <div className="footer-col-title">{title}</div>
-      {items.map((item) => <span key={item}>{item}</span>)}
     </div>
   );
 }
