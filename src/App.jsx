@@ -5,17 +5,19 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const assetPath = (path) => `${import.meta.env.BASE_URL}${path}`;
+
 const members = [
   'AEDEN', 'MISO', 'ZERO', 'HYUK', 'LUNA', 'RIKU', 'NANA', 'JUNO', 'KAEL', 'YURI',
   'SAGE', 'NOVA', 'DUSK', 'ECHO', 'FLUX', 'ONYX', 'PYRE', 'VALE', 'WREN', 'ZION'
 ];
 
 const games = [
-  ['01', 'Valorant', 'Main Battlefield', '/games/valorant.jpg'],
-  ['02', 'League of Legends', 'Classic Chaos', '/games/league.jpg'],
-  ['03', 'Minecraft', 'Creative Therapy', '/games/minecraft.png'],
-  ['04', 'Overwatch 2', 'Team Fights', '/games/overwatch.png'],
-  ['05', 'Lethal Company', 'Horror Nights', '/games/lethal-company.jpg'],
+  ['01', 'Valorant', 'Main Battlefield', assetPath('games/valorant.jpg')],
+  ['02', 'League of Legends', 'Classic Chaos', assetPath('games/league.jpg')],
+  ['03', 'Minecraft', 'Creative Therapy', assetPath('games/minecraft.png')],
+  ['04', 'Overwatch 2', 'Team Fights', assetPath('games/overwatch.png')],
+  ['05', 'Lethal Company', 'Horror Nights', assetPath('games/lethal-company.jpg')],
   ['06', '그 외...', 'Whatever Hits', null]
 ];
 
@@ -545,7 +547,7 @@ function App() {
 
           <div className="members-stage" data-reveal>
             <div className="crew-visual">
-              <img src="/crew-night-room.png" alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" />
+              <img src={assetPath('crew-night-room.png')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" />
               <div className="crew-visual-caption">
                 <span>Tonight room</span>
                 <strong>불이 켜져 있는 방이 있습니다.</strong>
