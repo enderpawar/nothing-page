@@ -11,12 +11,12 @@ const members = [
 ];
 
 const games = [
-  ['01', 'Valorant', 'Main Battlefield', 'linear-gradient(145deg,#ff4655,#0f1923,#ece8e1)'],
-  ['02', 'League of Legends', 'Classic Chaos', 'linear-gradient(145deg,#091428,#0a1428,#0bc4e2)'],
-  ['03', 'Minecraft', 'Creative Therapy', 'linear-gradient(145deg,#3e8948,#8b6914,#5b3a29)'],
-  ['04', 'Overwatch 2', 'Team Fights', 'linear-gradient(145deg,#fa9c1e,#1a1a2e,#e7e7e7)'],
-  ['05', 'Lethal Company', 'Horror Nights', 'linear-gradient(145deg,#0a0a0a,#1a0505,#440000)'],
-  ['06', '그 외...', 'Whatever Hits', 'linear-gradient(145deg,#141414,#222,#444)']
+  ['01', 'Valorant', 'Main Battlefield', '/games/valorant.jpg'],
+  ['02', 'League of Legends', 'Classic Chaos', '/games/league.jpg'],
+  ['03', 'Minecraft', 'Creative Therapy', '/games/minecraft.png'],
+  ['04', 'Overwatch 2', 'Team Fights', '/games/overwatch.png'],
+  ['05', 'Lethal Company', 'Horror Nights', '/games/lethal-company.jpg'],
+  ['06', '그 외...', 'Whatever Hits', null]
 ];
 
 const rules = [
@@ -563,10 +563,13 @@ function App() {
             <p className="games-counter" data-reveal>06 Titles & Counting</p>
           </div>
           <div className="games-track" id="gamesTrack">
-            {games.map(([number, title, subtitle, background]) => (
+            {games.map(([number, title, subtitle, image]) => (
               <div className="g-card" key={number}>
                 <div className="g-card-num">{number}</div>
-                <div className="g-card-bg" style={{ background }} />
+                <div
+                  className="g-card-bg"
+                  style={image ? { backgroundImage: `url(${image})` } : undefined}
+                />
                 <div className="g-card-overlay" />
                 <div className="g-card-content"><h3>{title}</h3><p>{subtitle}</p></div>
               </div>
