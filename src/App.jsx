@@ -642,6 +642,7 @@ function App() {
               </div>
               <div className="join-pass-main">
                 <p>Invite Only</p>
+                <span className="join-pass-admit">Admit one / Voice room access</span>
                 <div className="join-signature" aria-label="First Night Access">
                   <img src={assetPath('signature-first-night.svg')} alt="" aria-hidden="true" />
                 </div>

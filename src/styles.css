@@ -163,21 +163,22 @@ nav{position:fixed;top:0;width:100%;padding:1.8rem 3.5rem;display:flex;justify-c
 .join-showcase{position:relative}
 .join-pass{min-height:520px;border:1px solid rgba(242,237,228,.72);border-radius:8px;background:linear-gradient(180deg,#f4efe6,#eee8dc);color:var(--black);padding:clamp(1.75rem,2.8vw,2.75rem);display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 36px 110px rgba(0,0,0,.44);position:relative;overflow:hidden}
 .join-pass::before{content:'';position:absolute;inset:clamp(.9rem,1.45vw,1.28rem);border:1px solid rgba(8,8,8,.14);border-radius:6px;pointer-events:none}
-.join-pass::after{content:'INVITE';position:absolute;right:-.08em;bottom:-.1em;font-family:var(--serif);font-size:clamp(5.4rem,10vw,9.8rem);font-weight:800;letter-spacing:-.08em;color:rgba(8,8,8,.04);line-height:.8;pointer-events:none}
+.join-pass::after{content:'INVITE';position:absolute;right:-.1em;bottom:-.14em;font-family:var(--serif);font-size:clamp(5.2rem,9.5vw,9.2rem);font-weight:800;letter-spacing:-.08em;color:rgba(8,8,8,.028);line-height:.8;pointer-events:none}
 .join-pass-top,.join-pass-main,.join-pass-meta{position:relative;z-index:2}
-.join-pass-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:clamp(1.2rem,2vw,1.8rem);border-bottom:1px solid rgba(8,8,8,.1);font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(8,8,8,.5)}
-.pass-mark{display:inline-flex;align-items:center;justify-content:center;width:3rem;height:3rem;color:var(--black)}
+.join-pass-top{display:flex;justify-content:space-between;align-items:center;padding-bottom:clamp(.8rem,1.4vw,1.2rem);border-bottom:1px solid rgba(8,8,8,.1);font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(8,8,8,.5)}
+.pass-mark{display:inline-flex;align-items:center;justify-content:center;width:2.55rem;height:2.55rem;color:rgba(8,8,8,.88)}
 .pass-mark svg{display:block;width:100%;height:100%;overflow:visible}
-.pass-mark circle,.pass-mark line{fill:none;stroke:currentColor;stroke-width:4.5;stroke-linecap:round}
-.join-pass-main{padding:clamp(2.7rem,4.3vw,4.1rem) 0 clamp(2rem,3.5vw,3.1rem)}
-.join-pass-main p{font-family:var(--sans);font-size:.82rem;color:var(--black);margin-bottom:1rem}
+.pass-mark circle,.pass-mark line{fill:none;stroke:currentColor;stroke-width:4;stroke-linecap:round}
+.join-pass-main{padding:clamp(2.15rem,3.4vw,3.2rem) 0 clamp(1.8rem,3vw,2.6rem)}
+.join-pass-main p{font-family:var(--sans);font-size:.82rem;color:var(--black);margin-bottom:.45rem}
+.join-pass-admit{display:block;margin-bottom:1.05rem;font-family:var(--mono);font-size:.5rem;letter-spacing:.18em;text-transform:uppercase;color:rgba(8,8,8,.34)}
 .join-pass-main h3{max-width:620px;font-family:var(--serif);font-size:clamp(3.2rem,6.2vw,6.4rem);line-height:.86;letter-spacing:-.07em;color:var(--black)}
-.join-pass-main .join-signature{position:relative;width:min(100%,720px);max-width:100%;clip-path:inset(0 100% 0 0)}
+.join-pass-main .join-signature{position:relative;width:min(92%,680px);max-width:100%;clip-path:inset(0 100% 0 0)}
 .join-pass-main .join-signature img{display:block;width:100%;height:auto}
-.join-pass-main .join-signature::after{content:'';position:absolute;left:3%;right:8%;bottom:3%;height:2px;background:var(--black);transform:scaleX(0);transform-origin:left;opacity:.75}
+.join-pass-main .join-signature::after{content:'';position:absolute;left:4%;right:17%;bottom:3%;height:1.5px;background:var(--black);transform:scaleX(0);transform-origin:left;opacity:.55}
 .join-pass-main .join-signature.signed::after{animation:signatureLine .72s cubic-bezier(.65,0,.2,1) 1.08s forwards}
 @keyframes signatureLine{to{transform:scaleX(1)}}
-.join-pass-meta{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid rgba(8,8,8,.18)}
+.join-pass-meta{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px dashed rgba(8,8,8,.22)}
 .join-pass-meta div{padding:1rem 1rem 0 0;border-right:1px solid rgba(8,8,8,.12)}
 .join-pass-meta div:last-child{border-right:none}
 .join-pass-meta span{display:block;font-size:.68rem;color:rgba(8,8,8,.45);margin-bottom:.35rem}
@@ -239,6 +240,7 @@ footer{padding:clamp(3.5rem,7vh,5rem) clamp(2rem,6vw,6rem) 2rem;border-top:1px s
   .join-pass{min-height:390px}
   .join-pass-main h3{font-size:clamp(2.7rem,15vw,4.5rem)}
   .join-pass-main .join-signature{width:100%}
+  .join-pass-admit{font-size:.44rem;letter-spacing:.14em}
   .join-pass-meta{grid-template-columns:1fr}
   .join-pass-meta div{border-right:none;border-bottom:1px solid rgba(8,8,8,.1);padding:.8rem 0}
   .join-pass-meta div:last-child{border-bottom:none}
