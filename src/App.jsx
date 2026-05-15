@@ -90,6 +90,11 @@ function App() {
   }, []);
 
   useEffect(() => {
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+    window.scrollTo(0, 0);
+
     const cursor = document.getElementById('cursor');
     const trail = document.getElementById('cursorTrail');
     const loader = document.getElementById('loader');
@@ -112,6 +117,7 @@ function App() {
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       touchMultiplier: 2
     });
+    lenis.scrollTo(0, { immediate: true });
 
     lenis.on('scroll', (event) => {
       scrollVelocity = event.velocity;
@@ -244,12 +250,13 @@ function App() {
       const initMarquee = (selector, speed, direction) => {
         const inner = document.querySelector(`${selector} .marquee-inner`);
         if (!inner) return;
-        const width = inner.scrollWidth / 2;
+        const loopCount = Number(inner.dataset.loopCount) || 2;
+        const width = inner.scrollWidth / loopCount;
         gsap.set(inner, { x: direction > 0 ? 0 : -width });
         gsap.to(inner, { x: direction > 0 ? -width : 0, duration: speed, ease: 'none', repeat: -1 });
       };
-      initMarquee('#marquee1', 28, 1);
-      initMarquee('#marquee2', 32, -1);
+      initMarquee('#marquee1', 56, 1);
+      initMarquee('#marquee2', 64, 1);
 
       document.querySelectorAll('[data-reveal]').forEach((el) => {
         gsap.from(el, {
@@ -350,13 +357,6 @@ function App() {
         scrollTrigger: { trigger: '#manifestoTitle', start: 'top 80%' }
       });
 
-      gsap.from('.join-title', {
-        scale: 0.8,
-        opacity: 0,
-        filter: 'blur(10px)',
-        immediateRender: false,
-        scrollTrigger: { trigger: '#join', start: 'top 65%', end: 'center center', scrub: 1 }
-      });
       gsap.from('.join-kicker,.join-copy,.join-action,.join-proof,.join-showcase', {
         opacity: 0,
         y: 28,
@@ -366,6 +366,27 @@ function App() {
         immediateRender: false,
         scrollTrigger: { trigger: '#join', start: 'top 58%' }
       });
+      ScrollTrigger.create({
+        trigger: '.join-pass',
+        start: 'center 72%',
+        once: true,
+        onEnter() {
+          const signature = document.querySelector('.join-signature');
+          if (!signature) return;
+          gsap.fromTo(signature,
+            { clipPath: 'inset(0 100% 0 0)' },
+            { clipPath: 'inset(0 0% 0 0)', duration: 1.45, ease: 'power3.inOut', delay: 0.15 }
+          );
+          signature.classList.add('signed');
+        },
+        onEnterBack() {
+          const signature = document.querySelector('.join-signature');
+          if (!signature) return;
+          gsap.set(signature, { clipPath: 'inset(0 0% 0 0)' });
+          signature.classList.add('signed');
+        }
+      });
+      gsap.delayedCall(0.25, () => ScrollTrigger.refresh());
       gsap.from('.footer-brand,.footer-map,.footer-meta', {
         y: 60,
         opacity: 0,
@@ -386,11 +407,9 @@ function App() {
         cleanups.push(() => anchor.removeEventListener('click', click));
       });
 
-      document.querySelectorAll('.stat-card,.g-card,.vibe-tag,.join-btn').forEach((el) => {
+      document.querySelectorAll('.stat-card,.g-card,.join-btn').forEach((el) => {
         cleanups.push(bindHover(el, cursor, trail));
       });
-      document.querySelectorAll('.marquee-inner').forEach((el) => el.classList.add('velocity-skew'));
-
       ScrollTrigger.refresh();
     };
 
@@ -516,15 +535,10 @@ function App() {
             <span className="word word-outline">THING.</span>
           </div>
           <p className="vibe-sub" id="vibeSub">저희에게 "아무것도 아닌 것"은 곧 "전부"를 의미합니다.<br />목적 없이 모이지만, 그 속에서 진짜 유대가 생깁니다.</p>
-          <div className="vibe-tags">
-            {['Gaming', 'Late Night Talks', 'Memes', 'No Rules', 'Vibes Only'].map((tag) => (
-              <span className="vibe-tag" key={tag}><span>{tag}</span></span>
-            ))}
-          </div>
         </section>
       </div>
 
-      <Marquee id="marquee2" mark="★" items={['EST. 2026', 'DISCORD CREW', 'INVITE ONLY', '20대 크루']} />
+      <Marquee id="marquee2" mark="⊘" items={['EST. 2026', 'DISCORD CREW', 'INVITE ONLY', '20대 크루']} />
 
       <section id="members">
         <div className="members-bg-text" aria-hidden="true">CREW</div>
@@ -549,8 +563,8 @@ function App() {
             <div className="crew-visual">
               <img src={assetPath('crew-night-room.png')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" />
               <div className="crew-visual-caption">
-                <span>Tonight room</span>
-                <strong>불이 켜져 있는 방이 있습니다.</strong>
+                <span>Voice room</span>
+                <strong>오늘도 보이스룸은 켜져 있습니다.</strong>
               </div>
             </div>
           </div>
@@ -602,8 +616,8 @@ function App() {
           <div className="join-copy-block">
             <p className="join-kicker">Private crew invitation</p>
             <h2 className="join-title" data-reveal>
-              오늘 밤,<br />
-              빈자리가 있습니다.
+              오늘 밤, 빈자리가<br />
+              있습니다.
             </h2>
             <p className="join-copy">처음 들어오셔도 바로 대화에 섞일 수 있도록 저희가 먼저 맞이합니다. 가볍게 인사하고, 보이스룸 분위기를 살핀 뒤, 원하시면 바로 게임에 합류하시면 됩니다.</p>
             <div className="join-action">
@@ -619,11 +633,18 @@ function App() {
             <div className="join-pass">
               <div className="join-pass-top">
                 <span>NOTHING PASS</span>
-                <strong>⊘</strong>
+                <strong className="pass-mark" aria-label="General prohibition sign">
+                  <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                    <circle cx="32" cy="32" r="22" />
+                    <line x1="18" y1="18" x2="46" y2="46" />
+                  </svg>
+                </strong>
               </div>
               <div className="join-pass-main">
                 <p>Invite Only</p>
-                <h3>First Night Access</h3>
+                <div className="join-signature" aria-label="First Night Access">
+                  <img src={assetPath('signature-first-night.svg')} alt="" aria-hidden="true" />
+                </div>
               </div>
               <div className="join-pass-meta">
                 <div><span>Room</span><strong>Voice 01</strong></div>
@@ -666,10 +687,11 @@ function App() {
 }
 
 function Marquee({ id, items, mark }) {
-  const repeated = [...items, ...items];
+  const loopCount = 6;
+  const repeated = Array.from({ length: loopCount }, () => items).flat();
   return (
     <div className="marquee" id={id}>
-      <div className="marquee-inner">
+      <div className="marquee-inner" data-loop-count={loopCount}>
         {repeated.map((item, index) => (
           <span key={`${item}-${index}`}>{item}<span className="hi"> {mark}</span></span>
         ))}
