@@ -201,9 +201,9 @@ button.join-btn{appearance:none}
 .join-proof span{font-family:var(--sans);font-size:.72rem;color:rgba(242,237,228,.5);border:1px solid rgba(242,237,228,.1);border-radius:100px;padding:.58rem .85rem;background:rgba(242,237,228,.025)}
 .invite-modal{position:fixed;inset:0;z-index:10003;display:flex;align-items:center;justify-content:center;padding:clamp(1rem,4vw,3rem);isolation:isolate}
 .invite-modal-backdrop{position:absolute;inset:0;border:0;background:rgba(5,6,5,.74);cursor:none;animation:modalBackdrop .34s ease-out both}
-.invite-modal-panel{position:relative;width:min(860px,calc(100vw - 2rem));min-height:min(714px,calc(100svh - 2rem));max-height:calc(100svh - 2rem);overflow:hidden;border:1px solid rgba(8,8,8,.14);border-radius:8px;background:linear-gradient(180deg,#f4efe6,#eee8dc);color:var(--black);box-shadow:0 42px 160px rgba(0,0,0,.68);padding:clamp(1.7rem,3vw,2.6rem);display:flex;flex-direction:column;animation:invitePassZoom .62s cubic-bezier(.16,1,.3,1) both;transform-origin:78% 58%}
-.invite-modal-panel .signature-scratch{width:min(60%,420px,52vh)}
-.invite-modal-panel .join-pass-main{padding:clamp(1.2rem,2.4vw,2.2rem) 0 1rem}
+.invite-modal-panel{position:relative;width:min(720px,80vw);min-height:min(620px,80svh);max-height:80svh;overflow:hidden;border:1px solid rgba(8,8,8,.14);border-radius:8px;background:linear-gradient(180deg,#f4efe6,#eee8dc);color:var(--black);box-shadow:0 42px 160px rgba(0,0,0,.68);padding:clamp(1.4rem,2.4vw,2.2rem);display:flex;flex-direction:column;animation:invitePassZoom .62s cubic-bezier(.16,1,.3,1) both;transform-origin:78% 58%}
+.invite-modal-panel .signature-scratch{width:min(78%,500px,48vh)}
+.invite-modal-panel .join-pass-main{padding:clamp(1.1rem,2.2vw,2rem) 0 1rem}
 .invite-modal.closing{pointer-events:none}
 .invite-modal.closing .invite-modal-backdrop{animation:modalBackdropOut .56s cubic-bezier(.65,0,.35,1) both}
 .invite-modal.closing .invite-modal-panel{animation:invitePassReturn .56s cubic-bezier(.65,0,.35,1) both}
