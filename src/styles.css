@@ -14,8 +14,10 @@ body.modal-open{overflow:hidden}
 .grain{position:fixed;inset:0;pointer-events:none;z-index:9998;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");opacity:.04;isolation:isolate;contain:strict;transform:translateZ(0)}
 .cursor{position:fixed;left:0;top:0;width:14px;height:14px;border-radius:50%;background:var(--accent);mix-blend-mode:difference;pointer-events:none;z-index:10021;will-change:transform;contain:layout style size paint;backface-visibility:hidden;transform:translate3d(-100px,-100px,0)}
 .cursor-trail{position:fixed;left:0;top:0;width:44px;height:44px;border-radius:50%;border:1px solid rgba(242,237,228,.15);pointer-events:none;z-index:10020;will-change:transform;contain:layout style size paint;backface-visibility:hidden;transform:translate3d(-100px,-100px,0)}
-.modal-open .cursor{mix-blend-mode:normal}
-.modal-open .cursor-trail{opacity:.45}
+.modal-open .cursor{mix-blend-mode:normal;background:var(--black)}
+.modal-open .cursor.hover{background:var(--black)}
+.modal-open .cursor-trail{opacity:.55;border-color:rgba(8,8,8,.35)}
+.modal-open .cursor-trail.hover{border-color:rgba(8,8,8,.55)}
 .cursor.hover{width:64px;height:64px;background:rgba(242,237,228,.9)}
 .cursor-trail.hover{width:88px;height:88px;border-color:rgba(212,255,43,.25)}
 .cursor,.cursor-trail{transition:width .35s cubic-bezier(.23,1,.32,1),height .35s cubic-bezier(.23,1,.32,1),background .3s,border-color .3s}
@@ -181,12 +183,14 @@ button.join-btn{appearance:none}
 .join-pass-main .join-signature img{display:block;width:100%;height:auto}
 .join-pass-main .join-signature::after{content:'';position:absolute;left:4%;right:17%;bottom:3%;height:1.5px;background:var(--black);transform:scaleX(0);transform-origin:left;opacity:.55}
 .join-pass-main .join-signature.signed::after{animation:signatureLine .72s cubic-bezier(.65,0,.2,1) 1.08s forwards}
-.join-pass-main .signature-btn{appearance:none;border:0;background:transparent;padding:0;margin:0;cursor:none;display:block;text-align:left;transition:transform .35s cubic-bezier(.23,1,.32,1),filter .35s}
-.join-pass-main .signature-btn:hover{transform:translateY(-2px);filter:drop-shadow(0 6px 18px rgba(8,8,8,.18))}
-.join-pass-main .signature-btn:active{transform:translateY(0)}
-.join-pass-main .signature-btn.copied{filter:drop-shadow(0 0 10px rgba(212,255,43,.55))}
-.join-pass-main p.signature-hint{margin:.7rem 0 0;font-family:var(--mono);font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(8,8,8,.42);transition:color .3s}
-.join-pass-main .signature-btn.copied + p.signature-hint{color:rgba(8,8,8,.78)}
+.join-pass-main .signature-scratch{position:relative;width:min(92%,680px);max-width:100%;border-radius:4px;overflow:hidden;isolation:isolate;box-shadow:0 0 0 1px rgba(8,8,8,.08)}
+.join-pass-main .signature-scratch img{display:block;width:100%;height:auto;-webkit-user-drag:none;user-select:none;pointer-events:none}
+.join-pass-main .scratch-canvas{position:absolute;inset:0;width:100%;height:100%;cursor:none;touch-action:none;display:block}
+.join-pass-main .signature-scratch.scratch-complete{box-shadow:0 0 0 1px rgba(8,8,8,.04),0 0 24px rgba(212,255,43,.18);animation:scratchPop .55s cubic-bezier(.23,1,.32,1)}
+.join-pass-main .signature-scratch.scratch-complete::after{content:'';position:absolute;left:4%;right:17%;bottom:3%;height:1.5px;background:var(--black);transform-origin:left;opacity:.55;animation:signatureLine .72s cubic-bezier(.65,0,.2,1) .12s forwards;transform:scaleX(0);pointer-events:none}
+@keyframes scratchPop{0%{transform:scale(.985)}55%{transform:scale(1.015)}100%{transform:scale(1)}}
+.join-pass-main p.signature-hint{margin:.85rem 0 0;font-family:var(--mono);font-size:.52rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(8,8,8,.42);transition:color .3s;max-width:min(92%,680px)}
+.join-pass-main .signature-scratch.scratch-complete + p.signature-hint{color:rgba(8,8,8,.82)}
 @keyframes signatureLine{to{transform:scaleX(1)}}
 .join-pass-meta{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px dashed rgba(8,8,8,.22)}
 .join-pass-meta div{padding:1rem 1rem 0 0;border-right:1px solid rgba(8,8,8,.12)}

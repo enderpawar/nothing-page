@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -189,6 +189,7 @@ function App() {
       mouseY = event.clientY;
     };
 
+    document.addEventListener('pointermove', onMouseMove, { passive: true });
     document.addEventListener('mousemove', onMouseMove, { passive: true });
 
     let cachedMaxScroll = 0;
@@ -492,6 +493,7 @@ function App() {
     return () => {
       clearInterval(loaderInterval);
       cleanups.forEach((cleanup) => cleanup());
+      document.removeEventListener('pointermove', onMouseMove);
       document.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('wheel', onWheelLimit);
       window.removeEventListener('touchstart', onTouchStartLimit);
@@ -690,7 +692,7 @@ function App() {
                 <strong className="pass-mark" aria-label="General prohibition sign">
                   <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
                     <circle cx="32" cy="32" r="22" />
-                    <line x1="18" y1="18" x2="46" y2="46" />
+                    <line x1="46" y1="18" x2="18" y2="46" />
                   </svg>
                 </strong>
               </div>
@@ -725,27 +727,21 @@ function App() {
               <strong className="pass-mark" aria-label="General prohibition sign">
                 <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
                   <circle cx="32" cy="32" r="22" />
-                  <line x1="18" y1="18" x2="46" y2="46" />
+                  <line x1="46" y1="18" x2="18" y2="46" />
                 </svg>
               </strong>
             </div>
             <div className="join-pass-main">
               <p>Invite Only</p>
               <span className="join-pass-admit">Admit one / Voice room access</span>
-              <button
-                type="button"
-                className={`join-signature signed signature-btn${copiedContact === 'discord-modal' ? ' copied' : ''}`}
-                id="inviteModalTitle"
-                aria-label="Aeden 디스코드 태그 복사"
-                onClick={() => copyInviteContact('aeden', 'discord-modal')}
-              >
-                <img src={assetPath('signature-first-night.svg')} alt="" aria-hidden="true" />
-              </button>
-              <p className="signature-hint">
-                {copiedContact === 'discord-modal'
-                  ? '복사되었습니다 — Discord에 붙여넣으세요'
-                  : '사인을 클릭해 Aeden의 디스코드 태그를 복사하세요'}
-              </p>
+              <ScratchToReveal
+                src={assetPath('signature-first-night.svg')}
+                secret="aeden"
+                titleId="inviteModalTitle"
+                idleHint="사인을 모두 긁으면 Aeden의 디스코드 태그가 복사됩니다"
+                doneHint="복사되었습니다 — Discord에 붙여넣으세요"
+                onReveal={(value) => copyInviteContact(value, 'discord-modal')}
+              />
             </div>
             <div className="join-pass-meta">
               <div><span>Host</span><strong>Aeden</strong></div>
@@ -802,6 +798,170 @@ function Stat({ number, label, desc }) {
       <div className="stat-lbl">{label}</div>
       <div className="stat-desc">{desc}</div>
     </div>
+  );
+}
+
+function ScratchToReveal({ src, secret, titleId, idleHint, doneHint, onReveal }) {
+  const wrapRef = useRef(null);
+  const canvasRef = useRef(null);
+  const completedRef = useRef(false);
+  const [completed, setCompleted] = useState(false);
+
+  useEffect(() => {
+    if (completed) return undefined;
+    const wrap = wrapRef.current;
+    const canvas = canvasRef.current;
+    if (!wrap || !canvas) return undefined;
+
+    const ctx = canvas.getContext('2d');
+    let scratching = false;
+    let lastX = 0;
+    let lastY = 0;
+    let lastSampleAt = 0;
+    let logicalW = 0;
+    let logicalH = 0;
+
+    const paint = () => {
+      const w = wrap.offsetWidth;
+      const h = wrap.offsetHeight;
+      if (w <= 0 || h <= 0) return;
+      logicalW = w;
+      logicalH = h;
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = Math.floor(w * dpr);
+      canvas.height = Math.floor(h * dpr);
+      canvas.style.width = `${w}px`;
+      canvas.style.height = `${h}px`;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.globalCompositeOperation = 'source-over';
+
+      ctx.fillStyle = '#F2EDE4';
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.fillStyle = 'rgba(8,8,8,.55)';
+      ctx.font = '700 11px "IBM Plex Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('S C R A T C H   H E R E', w / 2, h / 2);
+    };
+
+    paint();
+    requestAnimationFrame(paint);
+
+    const onImgLoad = () => paint();
+    const img = wrap.querySelector('img');
+    if (img && !img.complete) img.addEventListener('load', onImgLoad);
+
+    const sampleProgress = () => {
+      const w = canvas.width;
+      const h = canvas.height;
+      const data = ctx.getImageData(0, 0, w, h).data;
+      let total = 0;
+      let cleared = 0;
+      for (let i = 3; i < data.length; i += 64) {
+        total++;
+        if (data[i] < 12) cleared++;
+      }
+      return total > 0 ? cleared / total : 0;
+    };
+
+    const eraseAt = (x, y) => {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.beginPath();
+      ctx.arc(x, y, 26, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    const eraseLine = (x0, y0, x1, y1) => {
+      ctx.globalCompositeOperation = 'destination-out';
+      ctx.lineWidth = 52;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(x0, y0);
+      ctx.lineTo(x1, y1);
+      ctx.stroke();
+    };
+
+    const localPoint = (event) => {
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return { x: 0, y: 0 };
+      return {
+        x: (event.clientX - rect.left) * (logicalW / rect.width),
+        y: (event.clientY - rect.top) * (logicalH / rect.height)
+      };
+    };
+
+    const checkComplete = (force = false) => {
+      const now = performance.now();
+      if (!force && now - lastSampleAt < 110) return;
+      lastSampleAt = now;
+      const ratio = sampleProgress();
+      if (ratio > 0.55 && !completedRef.current) {
+        completedRef.current = true;
+        setCompleted(true);
+        if (typeof onReveal === 'function') onReveal(secret);
+      }
+    };
+
+    const onPointerDown = (event) => {
+      if (event.button !== undefined && event.button !== 0) return;
+      event.preventDefault();
+      const { x, y } = localPoint(event);
+      scratching = true;
+      lastX = x;
+      lastY = y;
+      eraseAt(x, y);
+      try { canvas.setPointerCapture(event.pointerId); } catch { /* noop */ }
+    };
+
+    const onPointerMove = (event) => {
+      if (!scratching) return;
+      const { x, y } = localPoint(event);
+      eraseLine(lastX, lastY, x, y);
+      lastX = x;
+      lastY = y;
+      checkComplete();
+    };
+
+    const onPointerUp = () => {
+      if (!scratching) return;
+      scratching = false;
+      checkComplete(true);
+    };
+
+    canvas.addEventListener('pointerdown', onPointerDown);
+    canvas.addEventListener('pointermove', onPointerMove);
+    window.addEventListener('pointerup', onPointerUp);
+    canvas.addEventListener('pointercancel', onPointerUp);
+
+    const ro = typeof ResizeObserver !== 'undefined'
+      ? new ResizeObserver(() => { if (!completedRef.current) paint(); })
+      : null;
+    if (ro) ro.observe(wrap);
+
+    return () => {
+      canvas.removeEventListener('pointerdown', onPointerDown);
+      canvas.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('pointerup', onPointerUp);
+      canvas.removeEventListener('pointercancel', onPointerUp);
+      if (img) img.removeEventListener('load', onImgLoad);
+      if (ro) ro.disconnect();
+    };
+  }, [completed, onReveal, secret]);
+
+  return (
+    <>
+      <div
+        ref={wrapRef}
+        className={`signature-scratch${completed ? ' scratch-complete' : ''}`}
+        id={titleId}
+        aria-label="Aeden 디스코드 태그 스크래치"
+      >
+        <img src={src} alt="" aria-hidden="true" />
+        {!completed && <canvas ref={canvasRef} className="scratch-canvas" />}
+      </div>
+      <p className="signature-hint">{completed ? doneHint : idleHint}</p>
+    </>
   );
 }
 
