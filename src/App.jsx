@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -71,6 +71,10 @@ function bindHover(el, cursor, trail) {
 }
 
 function App() {
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [inviteModalClosing, setInviteModalClosing] = useState(false);
+  const [copiedContact, setCopiedContact] = useState('');
+
   const memberCards = useMemo(() => {
     const roles = ['Admin', 'Member', 'Member', 'Member', 'Moderator'];
     const tallIndexes = new Set([0, 4, 9, 14, 19]);
@@ -89,6 +93,65 @@ function App() {
     });
   }, []);
 
+  const openInviteModal = () => {
+    setInviteModalClosing(false);
+    setInviteModalOpen(true);
+  };
+
+  const closeInviteModal = () => {
+    if (inviteModalClosing) return;
+    setInviteModalClosing(true);
+    window.setTimeout(() => {
+      setInviteModalOpen(false);
+      setInviteModalClosing(false);
+    }, 560);
+  };
+
+  useEffect(() => {
+    if (!inviteModalOpen) return undefined;
+
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') closeInviteModal();
+    };
+
+    document.body.classList.add('modal-open');
+    window.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.classList.remove('modal-open');
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [inviteModalOpen, inviteModalClosing]);
+
+  useEffect(() => {
+    if (inviteModalOpen) return undefined;
+    setCopiedContact('');
+    return undefined;
+  }, [inviteModalOpen]);
+
+  const copyInviteContact = async (value, type) => {
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        const textarea = document.createElement('textarea');
+        textarea.value = value;
+        textarea.setAttribute('readonly', '');
+        textarea.style.position = 'fixed';
+        textarea.style.opacity = '0';
+        document.body.appendChild(textarea);
+        textarea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textarea);
+      }
+      setCopiedContact(type);
+      window.setTimeout(() => setCopiedContact(''), 1600);
+    } catch {
+      setCopiedContact('failed');
+      window.setTimeout(() => setCopiedContact(''), 1600);
+    }
+  };
+
   useEffect(() => {
     if ('scrollRestoration' in window.history) {
       window.history.scrollRestoration = 'manual';
@@ -101,15 +164,12 @@ function App() {
     const counter = document.getElementById('loaderCounter');
     const bar = document.getElementById('loaderBar');
     const cleanups = [];
-    let scrollVelocity = 0;
     let mouseX = -100;
     let mouseY = -100;
     let cursorX = -100;
     let cursorY = -100;
     let trailX = -100;
     let trailY = -100;
-    let cursorFrame = 0;
-    let skewFrame = 0;
     let value = 0;
 
     const lenis = new Lenis({
@@ -119,10 +179,7 @@ function App() {
     });
     lenis.scrollTo(0, { immediate: true });
 
-    lenis.on('scroll', (event) => {
-      scrollVelocity = event.velocity;
-      ScrollTrigger.update();
-    });
+    lenis.on('scroll', ScrollTrigger.update);
 
     gsap.ticker.add((time) => lenis.raf(time * 1000));
     gsap.ticker.lagSmoothing(0);
@@ -132,29 +189,25 @@ function App() {
       mouseY = event.clientY;
     };
 
-    document.addEventListener('mousemove', onMouseMove);
+    document.addEventListener('mousemove', onMouseMove, { passive: true });
 
-    const getFooterMaxScroll = () => {
+    let cachedMaxScroll = 0;
+    const recomputeMaxScroll = () => {
       const footer = document.querySelector('footer');
-      if (!footer) return document.documentElement.scrollHeight - window.innerHeight;
-
+      if (!footer) {
+        cachedMaxScroll = document.documentElement.scrollHeight - window.innerHeight;
+        return;
+      }
       const maxAtFooterBottom = footer.offsetTop + footer.offsetHeight - window.innerHeight;
       const documentMax = document.documentElement.scrollHeight - window.innerHeight;
-      return Math.max(0, Math.min(maxAtFooterBottom, documentMax));
+      cachedMaxScroll = Math.max(0, Math.min(maxAtFooterBottom, documentMax));
     };
-
-    const clampToFooterBottom = () => {
-      const maxScroll = getFooterMaxScroll();
-      if (window.scrollY > maxScroll) {
-        lenis.scrollTo(maxScroll, { immediate: true });
-      }
-    };
+    recomputeMaxScroll();
 
     const onWheelLimit = (event) => {
-      const maxScroll = getFooterMaxScroll();
-      if (event.deltaY > 0 && window.scrollY >= maxScroll - 1) {
+      if (event.deltaY > 0 && window.scrollY >= cachedMaxScroll - 1) {
         event.preventDefault();
-        lenis.scrollTo(maxScroll, { immediate: true });
+        lenis.scrollTo(cachedMaxScroll, { immediate: true });
       }
     };
 
@@ -166,46 +219,41 @@ function App() {
     const onTouchMoveLimit = (event) => {
       const currentY = event.touches[0]?.clientY ?? touchStartY;
       const swipingDownPage = currentY < touchStartY;
-      const maxScroll = getFooterMaxScroll();
-
-      if (swipingDownPage && window.scrollY >= maxScroll - 1) {
+      if (swipingDownPage && window.scrollY >= cachedMaxScroll - 1) {
         event.preventDefault();
-        lenis.scrollTo(maxScroll, { immediate: true });
+        lenis.scrollTo(cachedMaxScroll, { immediate: true });
       }
     };
 
     window.addEventListener('wheel', onWheelLimit, { passive: false });
     window.addEventListener('touchstart', onTouchStartLimit, { passive: true });
     window.addEventListener('touchmove', onTouchMoveLimit, { passive: false });
-    window.addEventListener('resize', clampToFooterBottom);
-    lenis.on('scroll', clampToFooterBottom);
+    window.addEventListener('resize', recomputeMaxScroll);
+    ScrollTrigger.addEventListener('refresh', recomputeMaxScroll);
 
-    const cursorLoop = () => {
-      cursorX += (mouseX - cursorX) * 0.18;
-      cursorY += (mouseY - cursorY) * 0.18;
-      trailX += (mouseX - trailX) * 0.07;
-      trailY += (mouseY - trailY) * 0.07;
+    const setCursorX = cursor ? gsap.quickSetter(cursor, 'x', 'px') : null;
+    const setCursorY = cursor ? gsap.quickSetter(cursor, 'y', 'px') : null;
+    const setTrailX = trail ? gsap.quickSetter(trail, 'x', 'px') : null;
+    const setTrailY = trail ? gsap.quickSetter(trail, 'y', 'px') : null;
+    if (cursor) gsap.set(cursor, { xPercent: -50, yPercent: -50, force3D: true });
+    if (trail) gsap.set(trail, { xPercent: -50, yPercent: -50, force3D: true });
 
-      if (cursor && trail) {
-        cursor.style.left = `${cursorX}px`;
-        cursor.style.top = `${cursorY}px`;
-        trail.style.left = `${trailX}px`;
-        trail.style.top = `${trailY}px`;
-      }
+    const cursorTick = () => {
+      const dxC = mouseX - cursorX;
+      const dyC = mouseY - cursorY;
+      const dxT = mouseX - trailX;
+      const dyT = mouseY - trailY;
+      if (Math.abs(dxC) < 0.05 && Math.abs(dyC) < 0.05 && Math.abs(dxT) < 0.05 && Math.abs(dyT) < 0.05) return;
 
-      cursorFrame = requestAnimationFrame(cursorLoop);
+      cursorX += dxC * 0.24;
+      cursorY += dyC * 0.24;
+      trailX += dxT * 0.11;
+      trailY += dyT * 0.11;
+
+      if (setCursorX) { setCursorX(cursorX); setCursorY(cursorY); }
+      if (setTrailX) { setTrailX(trailX); setTrailY(trailY); }
     };
-
-    const skewLoop = () => {
-      const skew = Math.max(-3, Math.min(3, scrollVelocity * 0.015));
-      document.querySelectorAll('.velocity-skew').forEach((el) => {
-        el.style.transform = `skewY(${skew}deg)`;
-      });
-      skewFrame = requestAnimationFrame(skewLoop);
-    };
-
-    cursorFrame = requestAnimationFrame(cursorLoop);
-    skewFrame = requestAnimationFrame(skewLoop);
+    gsap.ticker.add(cursorTick);
 
     const initAll = () => {
       const heroTitle = document.getElementById('heroTitle');
@@ -230,14 +278,20 @@ function App() {
       });
 
       const hero = document.getElementById('hero');
+      const s1xTo = gsap.quickTo('#hShape1', 'x', { duration: 1.5, ease: 'power2.out' });
+      const s1yTo = gsap.quickTo('#hShape1', 'y', { duration: 1.5, ease: 'power2.out' });
+      const s2xTo = gsap.quickTo('#hShape2', 'x', { duration: 1.8, ease: 'power2.out' });
+      const s2yTo = gsap.quickTo('#hShape2', 'y', { duration: 1.8, ease: 'power2.out' });
+      const s3xTo = gsap.quickTo('#hShape3', 'x', { duration: 2, ease: 'power2.out' });
+      const s3yTo = gsap.quickTo('#hShape3', 'y', { duration: 2, ease: 'power2.out' });
       const heroMove = (event) => {
         const rx = (event.clientX / window.innerWidth - 0.5) * 2;
         const ry = (event.clientY / window.innerHeight - 0.5) * 2;
-        gsap.to('#hShape1', { x: rx * 30, y: ry * 20, duration: 1.5, ease: 'power2.out' });
-        gsap.to('#hShape2', { x: rx * -20, y: ry * -15, duration: 1.8, ease: 'power2.out' });
-        gsap.to('#hShape3', { x: rx * 25, y: ry * -25, duration: 2, ease: 'power2.out' });
+        s1xTo(rx * 30); s1yTo(ry * 20);
+        s2xTo(rx * -20); s2yTo(ry * -15);
+        s3xTo(rx * 25); s3yTo(ry * -25);
       };
-      hero?.addEventListener('mousemove', heroMove);
+      hero?.addEventListener('mousemove', heroMove, { passive: true });
       cleanups.push(() => hero?.removeEventListener('mousemove', heroMove));
 
       gsap.to('.hero-content', {
@@ -442,9 +496,9 @@ function App() {
       window.removeEventListener('wheel', onWheelLimit);
       window.removeEventListener('touchstart', onTouchStartLimit);
       window.removeEventListener('touchmove', onTouchMoveLimit);
-      window.removeEventListener('resize', clampToFooterBottom);
-      cancelAnimationFrame(cursorFrame);
-      cancelAnimationFrame(skewFrame);
+      window.removeEventListener('resize', recomputeMaxScroll);
+      ScrollTrigger.removeEventListener('refresh', recomputeMaxScroll);
+      gsap.ticker.remove(cursorTick);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       lenis.destroy();
     };
@@ -621,10 +675,10 @@ function App() {
             </h2>
             <p className="join-copy">처음 들어오셔도 바로 대화에 섞일 수 있도록 저희가 먼저 맞이합니다. 가볍게 인사하고, 보이스룸 분위기를 살핀 뒤, 원하시면 바로 게임에 합류하시면 됩니다.</p>
             <div className="join-action">
-              <a href="#" className="join-btn">
+              <button type="button" className="join-btn" onClick={openInviteModal}>
                 <span className="join-btn-text">초대를 요청하세요</span>
                 <span className="arr">-&gt;</span>
-              </a>
+              </button>
               <p className="join-note">Aeden 또는 기존 멤버에게 초대를 요청하세요</p>
             </div>
           </div>
@@ -653,14 +707,54 @@ function App() {
                 <div><span>Since</span><strong>2026.02.20</strong></div>
               </div>
             </div>
-            <div className="join-proof" aria-label="server proof">
-              <span>12 active tonight</span>
-              <span>small circle</span>
-              <span>first hello guaranteed</span>
-            </div>
           </div>
         </div>
       </section>
+
+      {inviteModalOpen && (
+        <div className={`invite-modal${inviteModalClosing ? ' closing' : ''}`} role="dialog" aria-modal="true" aria-labelledby="inviteModalTitle">
+          <button
+            type="button"
+            className="invite-modal-backdrop"
+            aria-label="초대 요청 모달 닫기"
+            onClick={closeInviteModal}
+          />
+          <div className="join-pass invite-modal-panel" aria-labelledby="inviteModalTitle">
+            <div className="join-pass-top">
+              <span>NOTHING PASS</span>
+              <strong className="pass-mark" aria-label="General prohibition sign">
+                <svg viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+                  <circle cx="32" cy="32" r="22" />
+                  <line x1="18" y1="18" x2="46" y2="46" />
+                </svg>
+              </strong>
+            </div>
+            <div className="join-pass-main">
+              <p>Invite Only</p>
+              <span className="join-pass-admit">Admit one / Voice room access</span>
+              <button
+                type="button"
+                className={`join-signature signed signature-btn${copiedContact === 'discord-modal' ? ' copied' : ''}`}
+                id="inviteModalTitle"
+                aria-label="Aeden 디스코드 태그 복사"
+                onClick={() => copyInviteContact('aeden', 'discord-modal')}
+              >
+                <img src={assetPath('signature-first-night.svg')} alt="" aria-hidden="true" />
+              </button>
+              <p className="signature-hint">
+                {copiedContact === 'discord-modal'
+                  ? '복사되었습니다 — Discord에 붙여넣으세요'
+                  : '사인을 클릭해 Aeden의 디스코드 태그를 복사하세요'}
+              </p>
+            </div>
+            <div className="join-pass-meta">
+              <div><span>Host</span><strong>Aeden</strong></div>
+              <div><span>Email</span><strong>aeden0119@naver.com</strong></div>
+              <div><span>Since</span><strong>2026.02.20</strong></div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <footer>
         <div className="footer-layout">
