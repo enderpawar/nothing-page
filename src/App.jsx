@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Lenis from 'lenis';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
@@ -6,11 +6,6 @@ import { ScrollTrigger } from 'gsap/ScrollTrigger';
 gsap.registerPlugin(ScrollTrigger);
 
 const assetPath = (path) => `${import.meta.env.BASE_URL}${path}`;
-
-const members = [
-  'AEDEN', 'MISO', 'ZERO', 'HYUK', 'LUNA', 'RIKU', 'NANA', 'JUNO', 'KAEL', 'YURI',
-  'SAGE', 'NOVA', 'DUSK', 'ECHO', 'FLUX', 'ONYX', 'PYRE', 'VALE', 'WREN', 'ZION'
-];
 
 const games = [
   ['01', 'Valorant', 'Main Battlefield', assetPath('games/valorant.jpg')],
@@ -27,13 +22,6 @@ const rules = [
   ['03', '잠수는 이해하지만, 소통해 주세요', '바쁜 건 이해합니다. 그래도 가끔 한마디는 남겨 주세요.', 'chat'],
   ['04', '게임은 진지하게, 분위기는 가볍게 즐겨 주세요', '이기고 싶어도, 지더라도 재미있으면 충분합니다.', 'game'],
   ['05', 'NOTHING의 정신을 지켜 주세요', '쓸데없는 규칙은 없습니다. 자유롭게 즐기되, 서로를 배려해 주세요.', 'nothing']
-];
-
-const showcaseMoments = [
-  ['01', 'First Night', '처음 들어오신 분도 바로 대화에 섞일 수 있도록, 기존 멤버가 먼저 분위기를 열어 드립니다.'],
-  ['02', 'Voice Room', '새벽 보이스룸은 가볍게 시작해서 게임, 일상, 음악 이야기로 자연스럽게 이어집니다.'],
-  ['03', 'Game Queue', '발로란트, 리그, 마인크래프트처럼 그날 맞는 게임을 골라 부담 없이 함께합니다.'],
-  ['04', 'Small Circle', '20명 규모를 유지해 이름 없는 대기열이 아니라 서로 알아가는 공간으로 운영합니다.']
 ];
 
 function splitChars(el) {
@@ -74,24 +62,6 @@ function App() {
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteModalClosing, setInviteModalClosing] = useState(false);
   const [copiedContact, setCopiedContact] = useState('');
-
-  const memberCards = useMemo(() => {
-    const roles = ['Admin', 'Member', 'Member', 'Member', 'Moderator'];
-    const tallIndexes = new Set([0, 4, 9, 14, 19]);
-
-    return members.map((name, index) => {
-      const hue = (index * 18 + 130) % 360;
-      return {
-        name,
-        tall: tallIndexes.has(index),
-        online: index % 5 !== 2,
-        role: index === 0 ? 'Founder' : roles[index % roles.length],
-        avatarStyle: {
-          background: `linear-gradient(135deg,hsl(${hue},50%,48%),hsl(${(hue + 55) % 360},40%,38%))`
-        }
-      };
-    });
-  }, []);
 
   const openInviteModal = () => {
     setInviteModalClosing(false);
@@ -158,6 +128,8 @@ function App() {
     }
     window.scrollTo(0, 0);
 
+    const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+
     const cursor = document.getElementById('cursor');
     const trail = document.getElementById('cursorTrail');
     const loader = document.getElementById('loader');
@@ -175,69 +147,30 @@ function App() {
     const lenis = new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      touchMultiplier: 2
+      touchMultiplier: 2,
+      smoothTouch: false
     });
     lenis.scrollTo(0, { immediate: true });
 
     lenis.on('scroll', ScrollTrigger.update);
 
     gsap.ticker.add((time) => lenis.raf(time * 1000));
-    gsap.ticker.lagSmoothing(0);
 
-    const onMouseMove = (event) => {
-      mouseX = event.clientX;
-      mouseY = event.clientY;
-    };
+    if (!isTouch) {
+      const onMouseMove = (event) => {
+        mouseX = event.clientX;
+        mouseY = event.clientY;
+      };
+      document.addEventListener('pointermove', onMouseMove, { passive: true });
+      cleanups.push(() => document.removeEventListener('pointermove', onMouseMove));
+    }
 
-    document.addEventListener('pointermove', onMouseMove, { passive: true });
-    document.addEventListener('mousemove', onMouseMove, { passive: true });
-
-    let cachedMaxScroll = 0;
-    const recomputeMaxScroll = () => {
-      const footer = document.querySelector('footer');
-      if (!footer) {
-        cachedMaxScroll = document.documentElement.scrollHeight - window.innerHeight;
-        return;
-      }
-      const maxAtFooterBottom = footer.offsetTop + footer.offsetHeight - window.innerHeight;
-      const documentMax = document.documentElement.scrollHeight - window.innerHeight;
-      cachedMaxScroll = Math.max(0, Math.min(maxAtFooterBottom, documentMax));
-    };
-    recomputeMaxScroll();
-
-    const onWheelLimit = (event) => {
-      if (event.deltaY > 0 && window.scrollY >= cachedMaxScroll - 1) {
-        event.preventDefault();
-        lenis.scrollTo(cachedMaxScroll, { immediate: true });
-      }
-    };
-
-    let touchStartY = 0;
-    const onTouchStartLimit = (event) => {
-      touchStartY = event.touches[0]?.clientY ?? 0;
-    };
-
-    const onTouchMoveLimit = (event) => {
-      const currentY = event.touches[0]?.clientY ?? touchStartY;
-      const swipingDownPage = currentY < touchStartY;
-      if (swipingDownPage && window.scrollY >= cachedMaxScroll - 1) {
-        event.preventDefault();
-        lenis.scrollTo(cachedMaxScroll, { immediate: true });
-      }
-    };
-
-    window.addEventListener('wheel', onWheelLimit, { passive: false });
-    window.addEventListener('touchstart', onTouchStartLimit, { passive: true });
-    window.addEventListener('touchmove', onTouchMoveLimit, { passive: false });
-    window.addEventListener('resize', recomputeMaxScroll);
-    ScrollTrigger.addEventListener('refresh', recomputeMaxScroll);
-
-    const setCursorX = cursor ? gsap.quickSetter(cursor, 'x', 'px') : null;
-    const setCursorY = cursor ? gsap.quickSetter(cursor, 'y', 'px') : null;
-    const setTrailX = trail ? gsap.quickSetter(trail, 'x', 'px') : null;
-    const setTrailY = trail ? gsap.quickSetter(trail, 'y', 'px') : null;
-    if (cursor) gsap.set(cursor, { xPercent: -50, yPercent: -50, force3D: true });
-    if (trail) gsap.set(trail, { xPercent: -50, yPercent: -50, force3D: true });
+    const setCursorX = !isTouch && cursor ? gsap.quickSetter(cursor, 'x', 'px') : null;
+    const setCursorY = !isTouch && cursor ? gsap.quickSetter(cursor, 'y', 'px') : null;
+    const setTrailX = !isTouch && trail ? gsap.quickSetter(trail, 'x', 'px') : null;
+    const setTrailY = !isTouch && trail ? gsap.quickSetter(trail, 'y', 'px') : null;
+    if (!isTouch && cursor) gsap.set(cursor, { xPercent: -50, yPercent: -50, force3D: true });
+    if (!isTouch && trail) gsap.set(trail, { xPercent: -50, yPercent: -50, force3D: true });
 
     const cursorTick = () => {
       const dxC = mouseX - cursorX;
@@ -254,7 +187,7 @@ function App() {
       if (setCursorX) { setCursorX(cursorX); setCursorY(cursorY); }
       if (setTrailX) { setTrailX(trailX); setTrailY(trailY); }
     };
-    gsap.ticker.add(cursorTick);
+    if (!isTouch) gsap.ticker.add(cursorTick);
 
     const initAll = () => {
       const heroTitle = document.getElementById('heroTitle');
@@ -277,23 +210,6 @@ function App() {
         ease: 'power3.out',
         delay: 1.3
       });
-
-      const hero = document.getElementById('hero');
-      const s1xTo = gsap.quickTo('#hShape1', 'x', { duration: 1.5, ease: 'power2.out' });
-      const s1yTo = gsap.quickTo('#hShape1', 'y', { duration: 1.5, ease: 'power2.out' });
-      const s2xTo = gsap.quickTo('#hShape2', 'x', { duration: 1.8, ease: 'power2.out' });
-      const s2yTo = gsap.quickTo('#hShape2', 'y', { duration: 1.8, ease: 'power2.out' });
-      const s3xTo = gsap.quickTo('#hShape3', 'x', { duration: 2, ease: 'power2.out' });
-      const s3yTo = gsap.quickTo('#hShape3', 'y', { duration: 2, ease: 'power2.out' });
-      const heroMove = (event) => {
-        const rx = (event.clientX / window.innerWidth - 0.5) * 2;
-        const ry = (event.clientY / window.innerHeight - 0.5) * 2;
-        s1xTo(rx * 30); s1yTo(ry * 20);
-        s2xTo(rx * -20); s2yTo(ry * -15);
-        s3xTo(rx * 25); s3yTo(ry * -25);
-      };
-      hero?.addEventListener('mousemove', heroMove, { passive: true });
-      cleanups.push(() => hero?.removeEventListener('mousemove', heroMove));
 
       gsap.to('.hero-content', {
         yPercent: -30,
@@ -441,7 +357,6 @@ function App() {
           signature.classList.add('signed');
         }
       });
-      gsap.delayedCall(0.25, () => ScrollTrigger.refresh());
       gsap.from('.footer-brand,.footer-map,.footer-meta', {
         y: 60,
         opacity: 0,
@@ -493,25 +408,11 @@ function App() {
     return () => {
       clearInterval(loaderInterval);
       cleanups.forEach((cleanup) => cleanup());
-      document.removeEventListener('pointermove', onMouseMove);
-      document.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('wheel', onWheelLimit);
-      window.removeEventListener('touchstart', onTouchStartLimit);
-      window.removeEventListener('touchmove', onTouchMoveLimit);
-      window.removeEventListener('resize', recomputeMaxScroll);
-      ScrollTrigger.removeEventListener('refresh', recomputeMaxScroll);
-      gsap.ticker.remove(cursorTick);
+      if (!isTouch) gsap.ticker.remove(cursorTick);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
       lenis.destroy();
     };
   }, []);
-
-  const handleMemberMove = (event) => {
-    const card = event.currentTarget;
-    const rect = card.getBoundingClientRect();
-    card.style.setProperty('--mx', `${((event.clientX - rect.left) / rect.width) * 100}%`);
-    card.style.setProperty('--my', `${((event.clientY - rect.top) / rect.height) * 100}%`);
-  };
 
   return (
     <>
@@ -540,11 +441,6 @@ function App() {
       </nav>
 
       <section id="hero">
-        <div className="hero-bg-shapes">
-          <div className="hero-shape hero-shape-1" id="hShape1" />
-          <div className="hero-shape hero-shape-2" id="hShape2" />
-          <div className="hero-shape hero-shape-3" id="hShape3" />
-        </div>
         <div className="hero-content">
           <h1 className="hero-title" id="heroTitle" aria-label="NOTHING">NOTHING</h1>
           <div className="hero-sub-row">
@@ -617,7 +513,7 @@ function App() {
 
           <div className="members-stage" data-reveal>
             <div className="crew-visual">
-              <img src={assetPath('crew-night-room.png')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" />
+              <img src={assetPath('crew-night-room.png')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" loading="lazy" decoding="async" />
               <div className="crew-visual-caption">
                 <span>Voice room</span>
                 <strong>오늘도 보이스룸은 켜져 있습니다.</strong>
@@ -635,13 +531,20 @@ function App() {
             <p className="games-counter" data-reveal>06 Titles & Counting</p>
           </div>
           <div className="games-track" id="gamesTrack">
-            {games.map(([number, title, subtitle, image]) => (
+            {games.map(([number, title, subtitle, image], idx) => (
               <div className="g-card" key={number}>
                 <div className="g-card-num">{number}</div>
-                <div
-                  className="g-card-bg"
-                  style={image ? { backgroundImage: `url(${image})` } : undefined}
-                />
+                <div className="g-card-bg">
+                  {image && (
+                    <img
+                      src={image}
+                      alt=""
+                      aria-hidden="true"
+                      loading={idx === 0 ? 'eager' : 'lazy'}
+                      decoding="async"
+                    />
+                  )}
+                </div>
                 <div className="g-card-overlay" />
                 <div className="g-card-content"><h3>{title}</h3><p>{subtitle}</p></div>
               </div>

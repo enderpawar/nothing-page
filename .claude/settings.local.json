@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Item *)",
+      "PowerShell(Copy-Item *)",
+      "PowerShell(Remove-Item *)",
+      "PowerShell(python -c \"from PIL import Image; img = Image.open\\(r'C:\\\\Users\\\\jinwoo\\\\Desktop\\\\nothing-page\\\\public\\\\signature.png'\\).convert\\('RGB'\\); print\\('corners:', img.getpixel\\(\\(0,0\\)\\), img.getpixel\\(\\(10,10\\)\\), img.getpixel\\(\\(100,100\\)\\), img.getpixel\\(\\(1700,1090\\)\\), 'center:', img.getpixel\\(\\(852, 548\\)\\)\\)\")",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git push *)",
+      "PowerShell(vercel *)"
+    ]
+  }
+}
