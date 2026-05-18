@@ -735,8 +735,8 @@ function App() {
               <p>Invite Only</p>
               <span className="join-pass-admit">Admit one / Voice room access</span>
               <ScratchToReveal
-                src={assetPath('signature-first-night.svg')}
-                secret="aeden"
+                src={assetPath('signature-aeden0119.svg')}
+                secret="aeden0119"
                 titleId="inviteModalTitle"
                 idleHint="사인을 모두 긁으면 Aeden의 디스코드 태그가 복사됩니다"
                 doneHint="복사되었습니다 — Discord에 붙여넣으세요"
