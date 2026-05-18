@@ -8,11 +8,11 @@ gsap.registerPlugin(ScrollTrigger);
 const assetPath = (path) => `${import.meta.env.BASE_URL}${path}`;
 
 const games = [
-  ['01', 'Valorant', 'Main Battlefield', assetPath('games/valorant.jpg')],
-  ['02', 'League of Legends', 'Classic Chaos', assetPath('games/league.jpg')],
-  ['03', 'Minecraft', 'Creative Therapy', assetPath('games/minecraft.png')],
-  ['04', 'Overwatch 2', 'Team Fights', assetPath('games/overwatch.png')],
-  ['05', 'Lethal Company', 'Horror Nights', assetPath('games/lethal-company.jpg')],
+  ['01', 'Valorant', 'Main Battlefield', assetPath('games/valorant.webp')],
+  ['02', 'League of Legends', 'Classic Chaos', assetPath('games/league.webp')],
+  ['03', 'Minecraft', 'Creative Therapy', assetPath('games/minecraft.webp')],
+  ['04', 'Overwatch 2', 'Team Fights', assetPath('games/overwatch.webp')],
+  ['05', 'Lethal Company', 'Horror Nights', assetPath('games/lethal-company.webp')],
   ['06', '그 외...', 'Whatever Hits', null]
 ];
 
@@ -56,6 +56,11 @@ function bindHover(el, cursor, trail) {
     el.removeEventListener('mouseenter', enter);
     el.removeEventListener('mouseleave', leave);
   };
+}
+
+function shouldUseNativeScroll() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get('native-scroll') === '1';
 }
 
 function App() {
@@ -129,6 +134,11 @@ function App() {
     window.scrollTo(0, 0);
 
     const isTouch = window.matchMedia('(hover: none), (pointer: coarse)').matches;
+    const useNativeScroll = shouldUseNativeScroll();
+    const useCustomCursor = !isTouch && !useNativeScroll;
+
+    document.documentElement.classList.toggle('native-scroll', useNativeScroll);
+    document.documentElement.classList.toggle('low-composite', useNativeScroll);
 
     const cursor = document.getElementById('cursor');
     const trail = document.getElementById('cursorTrail');
@@ -144,19 +154,21 @@ function App() {
     let trailY = -100;
     let value = 0;
 
-    const lenis = new Lenis({
+    const lenis = useNativeScroll ? null : new Lenis({
       duration: 1.2,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       touchMultiplier: 2,
       smoothTouch: false
     });
-    lenis.scrollTo(0, { immediate: true });
+    let lenisTick = null;
+    if (lenis) {
+      lenis.scrollTo(0, { immediate: true });
+      lenis.on('scroll', ScrollTrigger.update);
+      lenisTick = (time) => lenis.raf(time * 1000);
+      gsap.ticker.add(lenisTick);
+    }
 
-    lenis.on('scroll', ScrollTrigger.update);
-
-    gsap.ticker.add((time) => lenis.raf(time * 1000));
-
-    if (!isTouch) {
+    if (useCustomCursor) {
       const onMouseMove = (event) => {
         mouseX = event.clientX;
         mouseY = event.clientY;
@@ -165,12 +177,12 @@ function App() {
       cleanups.push(() => document.removeEventListener('pointermove', onMouseMove));
     }
 
-    const setCursorX = !isTouch && cursor ? gsap.quickSetter(cursor, 'x', 'px') : null;
-    const setCursorY = !isTouch && cursor ? gsap.quickSetter(cursor, 'y', 'px') : null;
-    const setTrailX = !isTouch && trail ? gsap.quickSetter(trail, 'x', 'px') : null;
-    const setTrailY = !isTouch && trail ? gsap.quickSetter(trail, 'y', 'px') : null;
-    if (!isTouch && cursor) gsap.set(cursor, { xPercent: -50, yPercent: -50, force3D: true });
-    if (!isTouch && trail) gsap.set(trail, { xPercent: -50, yPercent: -50, force3D: true });
+    const setCursorX = useCustomCursor && cursor ? gsap.quickSetter(cursor, 'x', 'px') : null;
+    const setCursorY = useCustomCursor && cursor ? gsap.quickSetter(cursor, 'y', 'px') : null;
+    const setTrailX = useCustomCursor && trail ? gsap.quickSetter(trail, 'x', 'px') : null;
+    const setTrailY = useCustomCursor && trail ? gsap.quickSetter(trail, 'y', 'px') : null;
+    if (useCustomCursor && cursor) gsap.set(cursor, { xPercent: -50, yPercent: -50, force3D: true });
+    if (useCustomCursor && trail) gsap.set(trail, { xPercent: -50, yPercent: -50, force3D: true });
 
     const cursorTick = () => {
       const dxC = mouseX - cursorX;
@@ -187,7 +199,7 @@ function App() {
       if (setCursorX) { setCursorX(cursorX); setCursorY(cursorY); }
       if (setTrailX) { setTrailX(trailX); setTrailY(trailY); }
     };
-    if (!isTouch) gsap.ticker.add(cursorTick);
+    if (useCustomCursor) gsap.ticker.add(cursorTick);
 
     const initAll = () => {
       const heroTitle = document.getElementById('heroTitle');
@@ -268,7 +280,6 @@ function App() {
       });
       document.querySelectorAll('#vibeText .word').forEach((word, index) => {
         timeline.to(word, {
-          filter: 'blur(0px)',
           opacity: 1,
           scale: 1,
           duration: 0.35,
@@ -371,7 +382,12 @@ function App() {
         const click = (event) => {
           event.preventDefault();
           const target = document.querySelector(anchor.getAttribute('href'));
-          if (target) lenis.scrollTo(target);
+          if (!target) return;
+          if (lenis) {
+            lenis.scrollTo(target);
+          } else {
+            target.scrollIntoView({ block: 'start' });
+          }
         };
         anchor.addEventListener('click', click);
         cleanups.push(() => anchor.removeEventListener('click', click));
@@ -408,9 +424,11 @@ function App() {
     return () => {
       clearInterval(loaderInterval);
       cleanups.forEach((cleanup) => cleanup());
-      if (!isTouch) gsap.ticker.remove(cursorTick);
+      if (useCustomCursor) gsap.ticker.remove(cursorTick);
+      if (lenisTick) gsap.ticker.remove(lenisTick);
       ScrollTrigger.getAll().forEach((trigger) => trigger.kill());
-      lenis.destroy();
+      if (lenis) lenis.destroy();
+      document.documentElement.classList.remove('native-scroll', 'low-composite');
     };
   }, []);
 
@@ -513,7 +531,7 @@ function App() {
 
           <div className="members-stage" data-reveal>
             <div className="crew-visual">
-              <img src={assetPath('crew-night-room.png')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" loading="lazy" decoding="async" />
+              <img src={assetPath('crew-night-room.webp')} alt="늦은 밤 보이스룸 분위기를 담은 게임 데스크" loading="lazy" decoding="async" />
               <div className="crew-visual-caption">
                 <span>Voice room</span>
                 <strong>오늘도 보이스룸은 켜져 있습니다.</strong>
