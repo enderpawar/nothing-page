@@ -8,6 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=IBM+Plex+Mono:wght@300;400;500;600&family=Manrope:wght@300;400;500;600;700;800&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
   </head>
   <body>
+    <script>
+      // Force top-of-page on every load (before any framework/library boots)
+      if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+      window.scrollTo(0, 0);
+      window.addEventListener('beforeunload', function () { window.scrollTo(0, 0); });
+      window.addEventListener('pageshow', function (e) { if (e.persisted) window.scrollTo(0, 0); });
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
