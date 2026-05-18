@@ -700,7 +700,7 @@ function App() {
                 <p>Invite Only</p>
                 <span className="join-pass-admit">Admit one / Voice room access</span>
                 <div className="join-signature" aria-label="First Night Access">
-                  <img src={assetPath('signature-first-night.svg')} alt="" aria-hidden="true" />
+                  <img src={assetPath('signature.png')} alt="" aria-hidden="true" />
                 </div>
               </div>
               <div className="join-pass-meta">
@@ -735,7 +735,7 @@ function App() {
               <p>Invite Only</p>
               <span className="join-pass-admit">Admit one / Voice room access</span>
               <ScratchToReveal
-                src={assetPath('signature-aeden0119.svg')}
+                src={assetPath('signature.png')}
                 secret="aeden0119"
                 titleId="inviteModalTitle"
                 idleHint="사인을 모두 긁으면 Aeden의 디스코드 태그가 복사됩니다"
