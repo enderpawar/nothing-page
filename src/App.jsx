@@ -4,6 +4,7 @@ import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
 gsap.registerPlugin(ScrollTrigger);
+ScrollTrigger.config({ limitCallbacks: true, ignoreMobileResize: true });
 
 const assetPath = (path) => `${import.meta.env.BASE_URL}${path}`;
 
@@ -166,6 +167,7 @@ function App() {
       lenis.on('scroll', ScrollTrigger.update);
       lenisTick = (time) => lenis.raf(time * 1000);
       gsap.ticker.add(lenisTick);
+      gsap.ticker.lagSmoothing(0);
     }
 
     if (useCustomCursor) {
@@ -280,6 +282,7 @@ function App() {
       });
       document.querySelectorAll('#vibeText .word').forEach((word, index) => {
         timeline.to(word, {
+          filter: 'blur(0px)',
           opacity: 1,
           scale: 1,
           duration: 0.35,
